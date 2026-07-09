@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import * as THREE from 'three'
 import { useFrame, useThree } from '@react-three/fiber'
 import type { BoardPiece } from '../game/types'
@@ -66,6 +66,13 @@ export function Piece({ piece, selected }: PieceProps) {
 
   const [tx, tz] = squareToWorld(piece.square)
 
+  // Place the piece at its square on first mount (no glide from the origin);
+  // afterwards useFrame drives the position so square changes animate.
+  useLayoutEffect(() => {
+    if (group.current) group.current.position.set(tx, 0, tz)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   // Smoothly glide to the target square (movement / capture animation).
   useFrame((_, delta) => {
     const g = group.current
@@ -94,7 +101,6 @@ export function Piece({ piece, selected }: PieceProps) {
   return (
     <group
       ref={group}
-      position={[tx, 0, tz]}
       onClick={(e) => {
         e.stopPropagation()
         selectSquare(piece.square)

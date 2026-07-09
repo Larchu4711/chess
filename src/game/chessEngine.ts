@@ -1,5 +1,5 @@
 import { Chess } from 'chess.js'
-import type { Square } from 'chess.js'
+import type { Move, Square } from 'chess.js'
 import type { BoardPiece, Color } from './types'
 
 /**
@@ -51,12 +51,12 @@ export class ChessEngine {
 
   /**
    * Apply a move. Always promotes to queen for simplicity (MVP). Returns the
-   * SAN of the move, or null if the move was illegal.
+   * verbose Move object (from/to/flags/captured/promotion/san), or null if the
+   * move was illegal. Callers use the flags to animate the board incrementally.
    */
-  move(from: Square, to: Square): string | null {
+  move(from: Square, to: Square): Move | null {
     try {
-      const result = this.chess.move({ from, to, promotion: 'q' })
-      return result ? result.san : null
+      return this.chess.move({ from, to, promotion: 'q' })
     } catch {
       // chess.js throws on an illegal move; treat as rejected.
       return null

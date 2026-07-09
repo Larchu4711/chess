@@ -2,7 +2,9 @@ import { create } from 'zustand'
 import type { Square } from 'chess.js'
 import { ChessEngine } from '../game/chessEngine'
 import { ChessAI } from '../game/ai'
-import type { BoardPiece, Color, Difficulty, SkinKey } from '../game/types'
+import { applyMoveToEntities, buildEntities } from '../game/entities'
+import type { PieceEntity } from '../game/entities'
+import type { Color, Difficulty, SkinKey } from '../game/types'
 
 /** Data for one customized piece skin. */
 export interface SkinData {
@@ -28,7 +30,7 @@ export const PLAYER_COLOR: Color = 'w'
 
 interface GameState {
   fen: string
-  pieces: BoardPiece[]
+  entities: PieceEntity[]
   turn: Color
   selected: Square | null
   legalTargets: Square[]
@@ -58,10 +60,9 @@ function computeStatus(): GameStatus {
   return { kind: 'playing', check: engine.isCheck() }
 }
 
-function snapshot(): Pick<GameState, 'fen' | 'pieces' | 'turn' | 'history' | 'status' | 'lastMove'> {
+function snapshot(): Pick<GameState, 'fen' | 'turn' | 'history' | 'status' | 'lastMove'> {
   return {
     fen: engine.fen(),
-    pieces: engine.pieces(),
     turn: engine.turn(),
     history: engine.history(),
     status: computeStatus(),
@@ -82,31 +83,38 @@ export const useGameStore = create<GameState>((set, get) => {
       set({ thinking: false })
       return
     }
-    engine.move(best.from, best.to)
-    set({
+    const move = engine.move(best.from, best.to)
+    if (!move) {
+      set({ thinking: false })
+      return
+    }
+    set((s) => ({
       ...snapshot(),
+      entities: applyMoveToEntities(s.entities, move),
       lastMove: { from: best.from, to: best.to },
       thinking: false,
       selected: null,
       legalTargets: [],
-    })
+    }))
   }
 
   function applyPlayerMove(from: Square, to: Square) {
-    const san = engine.move(from, to)
-    if (!san) return false
-    set({
+    const move = engine.move(from, to)
+    if (!move) return false
+    set((s) => ({
       ...snapshot(),
+      entities: applyMoveToEntities(s.entities, move),
       lastMove: { from, to },
       selected: null,
       legalTargets: [],
-    })
+    }))
     void playAiMove()
     return true
   }
 
   return {
     ...snapshot(),
+    entities: buildEntities(engine.pieces()),
     selected: null,
     legalTargets: [],
     difficulty: 2,
@@ -141,6 +149,7 @@ export const useGameStore = create<GameState>((set, get) => {
       engine.reset()
       set({
         ...snapshot(),
+        entities: buildEntities(engine.pieces()),
         selected: null,
         legalTargets: [],
         thinking: false,
@@ -155,6 +164,7 @@ export const useGameStore = create<GameState>((set, get) => {
       if (engine.turn() !== PLAYER_COLOR) engine.undo()
       set({
         ...snapshot(),
+        entities: buildEntities(engine.pieces()),
         selected: null,
         legalTargets: [],
       })

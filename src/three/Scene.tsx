@@ -4,10 +4,9 @@ import * as THREE from 'three'
 import { Board } from './Board'
 import { Piece } from './Piece'
 import { useGameStore } from '../store/gameStore'
-import { skinKey } from '../game/types'
 
 export function Scene() {
-  const pieces = useGameStore((s) => s.pieces)
+  const entities = useGameStore((s) => s.entities)
   const selected = useGameStore((s) => s.selected)
   const clearSelection = useGameStore((s) => s.clearSelection)
 
@@ -42,12 +41,8 @@ export function Scene() {
 
       <Board />
 
-      {pieces.map((piece) => (
-        <Piece
-          key={skinKey(piece.color, piece.type) + '@' + piece.square}
-          piece={piece}
-          selected={selected === piece.square}
-        />
+      {entities.map((piece) => (
+        <Piece key={piece.id} piece={piece} selected={selected === piece.square} />
       ))}
 
       <ContactShadows position={[0, 0.001, 0]} opacity={0.5} scale={12} blur={2.4} far={4} />
