@@ -3,43 +3,44 @@ import * as THREE from 'three'
 const SIZE = 512
 
 /**
- * Turn an uploaded photo into a circular "medallion" texture: the image is
- * center-cropped to a square, drawn into a canvas, and faded out towards the
- * edges with a radial alpha mask so it reads as a portrait mounted on the
- * piece. Runs entirely in the browser — no ML, no network.
+ * Prepare an uploaded photo for projection onto the 3D head: center-cropped to
+ * a square, biased slightly towards the upper part (where the face usually is),
+ * with a gentle edge feather so the projection blends into the sculpt. Edges are
+ * clamped; the head shader gates sampling to the front, so no wrap-around.
  */
-export async function createPortraitTexture(imageUrl: string): Promise<THREE.CanvasTexture> {
+export async function createFaceTexture(imageUrl: string): Promise<THREE.CanvasTexture> {
   const img = await loadImage(imageUrl)
   const canvas = document.createElement('canvas')
   canvas.width = SIZE
   canvas.height = SIZE
   const ctx = canvas.getContext('2d')!
 
-  // Center-crop the source to a square and draw it filling the canvas.
   const side = Math.min(img.width, img.height)
   const sx = (img.width - side) / 2
-  const sy = (img.height - side) / 2
+  // Bias the crop slightly upward so foreheads aren't cut and chins have room.
+  const sy = Math.max(0, (img.height - side) / 2 - side * 0.05)
   ctx.drawImage(img, sx, sy, side, side, 0, 0, SIZE, SIZE)
 
-  // Radial alpha mask: fully opaque in the center, transparent past the rim.
-  const mask = ctx.createRadialGradient(
+  // Soft rectangular feather at the very edges.
+  const feather = ctx.createRadialGradient(
     SIZE / 2,
     SIZE / 2,
-    SIZE * 0.2,
+    SIZE * 0.35,
     SIZE / 2,
     SIZE / 2,
-    SIZE * 0.5,
+    SIZE * 0.62,
   )
-  mask.addColorStop(0, 'rgba(0,0,0,1)')
-  mask.addColorStop(0.82, 'rgba(0,0,0,1)')
-  mask.addColorStop(1, 'rgba(0,0,0,0)')
+  feather.addColorStop(0, 'rgba(0,0,0,1)')
+  feather.addColorStop(1, 'rgba(0,0,0,0)')
   ctx.globalCompositeOperation = 'destination-in'
-  ctx.fillStyle = mask
+  ctx.fillStyle = feather
   ctx.fillRect(0, 0, SIZE, SIZE)
   ctx.globalCompositeOperation = 'source-over'
 
   const texture = new THREE.CanvasTexture(canvas)
   texture.colorSpace = THREE.SRGBColorSpace
+  texture.wrapS = THREE.ClampToEdgeWrapping
+  texture.wrapT = THREE.ClampToEdgeWrapping
   texture.anisotropy = 4
   texture.needsUpdate = true
   return texture

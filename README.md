@@ -12,9 +12,11 @@ es erscheint als Porträt-Medaillon auf allen Figuren dieser Art. Gespielt wird
   Staunton-Silhouetten) — keine externen Modelldateien, voll deploybar.
 - **KI-Gegner** (Alpha-Beta-Minimax) in einem Web Worker, 4 Schwierigkeitsstufen.
   Läuft komplett offline, kein WASM, keine speziellen HTTP-Header nötig.
-- **Foto-Personalisierung:** pro Spielerfarbe und Figurenart ein Foto hochladen;
-  es wird zu einem runden Medaillon verarbeitet und auf die Figuren montiert
-  (immer zur Kamera ausgerichtet). Läuft vollständig im Browser, ohne Netzwerk.
+- **Foto-Personalisierung mit 3D-Kopf:** pro Spielerfarbe und Figurenart ein Foto
+  hochladen; es wird auf eine plastisch geformte **3D-Kopf-Büste** über der Figur
+  projiziert (Gesicht auf der Front, Seiten/Rücken als Marmor-/Onyx-Skulptur, von
+  der Szene beleuchtet). Ein echtes 3D-Objekt, das man umkreisen kann — komplett
+  im Browser erzeugt, ohne ML-Modell oder Netzwerk.
 - **Optionale KI-Stilisierung:** Fotos können durch eine Bild-KI in eine
   stilisierte Büste/Statue verwandelt werden — strikt optional und gekapselt.
 
@@ -83,7 +85,7 @@ api/           stylize.ts              # optionale Serverless-Referenz
 ## Roadmap (bewusst außerhalb des MVP)
 
 - Online-Multiplayer (Backend, Echtzeit-Sync, Konten)
-- Echte 3D-Kopf-Rekonstruktion statt Medaillon; Freistellen via Segmentierung
-  (Gerüst liegt in `pieces/faceCutout.ts`)
-- Gleit-Animation der Figuren, Schlag-Effekte, Sound, mehrere Material-Themes
+- ML-basierte 3D-Gesichtsrekonstruktion (3DMM) für noch höhere Detailtreue;
+  Freistellen via Segmentierung (Gerüst liegt in `pieces/faceCutout.ts`)
+- Schlag-Effekte, Sound, mehrere Material-Themes
 - Speichern/Laden, Zug-Anzeige in Standardnotation exportieren
