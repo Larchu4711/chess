@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Schach mit eigenen Figuren</title>
+    <meta
+      name="description"
+      content="Schach im Browser, bei dem jeder Spieler seine Figuren mit eigenen Fotos gestaltet."
+    />
+  </head>
+  <body>
+    <div id="app">
+      <header class="topbar">
+        <h1>Schach<span class="topbar__accent">.</span></h1>
+        <p class="topbar__subtitle">Mit Figuren, die aussehen wie ihr.</p>
+      </header>
+
+      <main class="layout">
+        <section class="board-area">
+          <div class="player-strip" id="strip-top">
+            <span class="player-strip__name">Schwarz</span>
+            <span class="player-strip__note" id="note-top"></span>
+          </div>
+
+          <div class="board" id="board">
+            <div class="board__squares" id="squares"></div>
+            <div class="board__pieces" id="pieces"></div>
+            <div class="board__promotion" id="promotion" hidden>
+              <div class="promotion__title">Umwandeln in</div>
+              <div class="promotion__choices" id="promotion-choices"></div>
+            </div>
+          </div>
+
+          <div class="player-strip" id="strip-bottom">
+            <span class="player-strip__name">Weiß</span>
+            <span class="player-strip__note" id="note-bottom"></span>
+          </div>
+        </section>
+
+        <aside class="panel">
+          <div class="status-row">
+            <div class="status" id="status">Weiß ist am Zug</div>
+            <button
+              class="icon-button"
+              id="sound-toggle"
+              aria-pressed="true"
+              aria-label="Ton ein- oder ausschalten"
+              title="Ton ein- oder ausschalten"
+            >
+              ♪
+            </button>
+          </div>
+
+          <button class="button button--primary" id="open-designer">
+            Figuren gestalten
+          </button>
+
+          <div class="field">
+            <label for="mode">Gegner</label>
+            <select id="mode">
+              <option value="computer">Computer</option>
+              <option value="human">Zweiter Mensch (am selben Gerät)</option>
+            </select>
+          </div>
+
+          <div class="field" id="level-field">
+            <label for="level">Spielstärke</label>
+            <select id="level">
+              <option value="anfaenger">Anfänger</option>
+              <option value="leicht">Leicht</option>
+              <option value="mittel" selected>Mittel</option>
+              <option value="stark">Stark</option>
+            </select>
+          </div>
+
+          <div class="field" id="side-field">
+            <label for="side">Du spielst</label>
+            <select id="side">
+              <option value="0" selected>Weiß</option>
+              <option value="1">Schwarz</option>
+            </select>
+          </div>
+
+          <div class="button-row">
+            <button class="button" id="new-game">Neue Partie</button>
+            <button class="button" id="undo">Zurück</button>
+            <button class="button" id="flip">Drehen</button>
+          </div>
+
+          <div class="moves">
+            <h2>Zugliste</h2>
+            <ol class="moves__list" id="moves"></ol>
+          </div>
+        </aside>
+      </main>
+    </div>
+
+    <div class="modal" id="designer" hidden>
+      <div class="modal__backdrop" data-close-designer></div>
+      <div class="modal__body" role="dialog" aria-modal="true" aria-labelledby="designer-title">
+        <div class="modal__header">
+          <h2 id="designer-title">Figuren gestalten</h2>
+          <button class="icon-button" data-close-designer aria-label="Schließen">×</button>
+        </div>
+
+        <div class="designer">
+          <div class="designer__preview">
+            <canvas id="preview" width="440" height="440"></canvas>
+            <div class="designer__hint" id="designer-hint">
+              Lade ein Foto hoch — das Gesicht wird in den Kopf der Figur eingesetzt.
+            </div>
+          </div>
+
+          <div class="designer__controls">
+            <div class="tabs" id="player-tabs">
+              <button class="tab tab--active" data-color="0">Weiß</button>
+              <button class="tab" data-color="1">Schwarz</button>
+            </div>
+
+            <label class="field">
+              <span>Name des Spielers</span>
+              <input type="text" id="player-name" maxlength="24" />
+            </label>
+
+            <div class="piece-picker" id="piece-picker"></div>
+
+            <label class="dropzone" id="dropzone">
+              <input type="file" id="file-input" accept="image/*" hidden />
+              <span class="dropzone__label">Foto hierher ziehen oder auswählen</span>
+              <span class="dropzone__hint">JPG, PNG oder WebP</span>
+            </label>
+
+            <div class="sliders" id="sliders">
+              <label class="slider">
+                <span>Zoom</span>
+                <input type="range" id="slider-scale" min="0.4" max="3" step="0.01" value="1" />
+              </label>
+              <label class="slider">
+                <span>Horizontal</span>
+                <input type="range" id="slider-dx" min="-1.5" max="1.5" step="0.01" value="0" />
+              </label>
+              <label class="slider">
+                <span>Vertikal</span>
+                <input type="range" id="slider-dy" min="-1.5" max="1.5" step="0.01" value="0" />
+              </label>
+              <label class="slider">
+                <span>Drehung</span>
+                <input type="range" id="slider-rotate" min="-3.15" max="3.15" step="0.01" value="0" />
+              </label>
+            </div>
+
+            <div class="button-row button-row--wrap">
+              <button class="button" id="apply-all">Auf alle Figuren übernehmen</button>
+              <button class="button" id="remove-image">Foto entfernen</button>
+              <button class="button button--quiet" id="reset-all">Alles zurücksetzen</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal__footer">
+          <span class="modal__note" id="designer-note"></span>
+          <button class="button button--primary" data-close-designer>Fertig</button>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

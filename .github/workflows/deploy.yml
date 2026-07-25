@@ -1,0 +1,74 @@
+name: Test und Veröffentlichung
+
+# Bei einem Pull Request wird nur gebaut und getestet. Veröffentlicht wird
+# ausschließlich, was auf main liegt.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Zwei gleichzeitige Veröffentlichungen würden sich gegenseitig überholen.
+# Laufende Läufe werden aber nicht abgebrochen, damit ein begonnenes Deployment
+# sauber zu Ende geht.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Bauen und testen
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Abhängigkeiten installieren
+        run: npm ci
+
+      - name: Typen prüfen
+        run: npm run typecheck
+
+      - name: Tests
+        run: npm test
+
+      - name: Produktionsbuild
+        run: npm run build
+
+      # `enablement` legt die Pages-Seite beim ersten Lauf selbst an, sodass
+      # sie nicht vorher von Hand in den Repo-Einstellungen aktiviert werden
+      # muss.
+      - name: Pages vorbereiten
+        if: github.event_name != 'pull_request'
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - name: Build hochladen
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    name: Veröffentlichen
+    if: github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Auf GitHub Pages veröffentlichen
+        id: deployment
+        uses: actions/deploy-pages@v4
