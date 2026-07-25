@@ -6,13 +6,29 @@ import './style.css';
 
 import { Game } from './engine/game';
 import { isInCheck } from './engine/moves';
-import { BISHOP, Color, KNIGHT, Move, PAWN, QUEEN, ROOK, WHITE, pieceType, sqRank } from './engine/types';
+import {
+  BISHOP,
+  Color,
+  EMPTY,
+  FLAG_CASTLE_KING,
+  FLAG_CASTLE_QUEEN,
+  FLAG_EN_PASSANT,
+  KNIGHT,
+  Move,
+  PAWN,
+  QUEEN,
+  ROOK,
+  WHITE,
+  pieceType,
+  sqRank,
+} from './engine/types';
 import type { SearchRequest, SearchResponse } from './ai/worker';
 import { DesignSet } from './pieces/design';
 import { renderAllSprites } from './pieces/render';
 import { loadDesigns, saveDesigns } from './pieces/storage';
 import { BoardView } from './ui/board';
 import { Designer } from './ui/designer';
+import { Sound } from './ui/sound';
 
 type Mode = 'computer' | 'human';
 
@@ -32,6 +48,7 @@ class App {
   private board: BoardView;
   private designer: Designer;
   private worker: Worker;
+  private sound = new Sound();
 
   private mode: Mode = 'computer';
   private level = 'mittel';
@@ -68,6 +85,15 @@ class App {
 
   private bindControls(): void {
     el<HTMLButtonElement>('open-designer').addEventListener('click', () => this.designer.open());
+
+    const soundToggle = el<HTMLButtonElement>('sound-toggle');
+    soundToggle.setAttribute('aria-pressed', String(this.sound.enabled));
+    soundToggle.addEventListener('click', () => {
+      const next = !this.sound.enabled;
+      this.sound.setEnabled(next);
+      soundToggle.setAttribute('aria-pressed', String(next));
+      if (next) this.sound.play('move');
+    });
 
     el<HTMLSelectElement>('mode').addEventListener('change', (event) => {
       this.mode = (event.target as HTMLSelectElement).value as Mode;
@@ -154,8 +180,30 @@ class App {
 
   private play(move: Move): void {
     this.game.play(move);
+    this.announce(move);
     this.render();
     this.maybeStartSearch();
+  }
+
+  /** Passender Ton zum gerade ausgeführten Zug. */
+  private announce(move: Move): void {
+    if (this.game.result().over) {
+      this.sound.play('end');
+      return;
+    }
+    if (isInCheck(this.game.position)) {
+      this.sound.play('check');
+      return;
+    }
+    if (move.flags & (FLAG_CASTLE_KING | FLAG_CASTLE_QUEEN)) {
+      this.sound.play('castle');
+      return;
+    }
+    if (move.captured !== EMPTY || move.flags & FLAG_EN_PASSANT) {
+      this.sound.play('capture');
+      return;
+    }
+    this.sound.play('move');
   }
 
   private undo(): void {
@@ -208,6 +256,7 @@ class App {
     const move = this.game.findMove(result.from, result.to, result.promotion);
     if (move) {
       this.game.play(move);
+      this.announce(move);
     }
     this.render();
   }
@@ -291,10 +340,12 @@ class App {
       const item = document.createElement('li');
       const white = document.createElement('span');
       white.textContent = history[i];
+      if (i === history.length - 1) white.classList.add('moves__current');
       item.appendChild(white);
       if (history[i + 1]) {
         const black = document.createElement('span');
         black.textContent = history[i + 1];
+        if (i + 1 === history.length - 1) black.classList.add('moves__current');
         item.appendChild(black);
       }
       list.appendChild(item);

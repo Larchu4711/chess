@@ -116,6 +116,24 @@ function drawShadow(ctx: CanvasRenderingContext2D, geo: Geometry): void {
   ctx.restore();
 }
 
+/**
+ * Waagerechter Verlauf über die Breite eines Bauteils. Eine gedrechselte Figur
+ * ist rund, und genau das lässt ein seitlicher Verlauf sie auch aussehen —
+ * dunkel an den Rändern, hell in der Mitte.
+ */
+function cylinder(
+  ctx: CanvasRenderingContext2D,
+  halfWidth: number,
+  palette: Palette,
+): CanvasGradient {
+  const gradient = ctx.createLinearGradient(50 - halfWidth, 0, 50 + halfWidth, 0);
+  gradient.addColorStop(0, palette.bodyShade);
+  gradient.addColorStop(0.3, palette.body);
+  gradient.addColorStop(0.62, palette.body);
+  gradient.addColorStop(1, palette.bodyShade);
+  return gradient;
+}
+
 function drawBody(ctx: CanvasRenderingContext2D, geo: Geometry, palette: Palette): void {
   const { baseHalf, plinthHalf, waistHalf, waistY, collarHalf, collarY } = geo;
 
@@ -133,7 +151,7 @@ function drawBody(ctx: CanvasRenderingContext2D, geo: Geometry, palette: Palette
   ctx.quadraticCurveTo(50 + baseHalf, 81, 50 + baseHalf, 85);
   ctx.lineTo(50 + baseHalf, 91);
   ctx.closePath();
-  ctx.fillStyle = palette.bodyShade;
+  ctx.fillStyle = cylinder(ctx, baseHalf, palette);
   ctx.fill();
   ctx.stroke();
 
@@ -154,14 +172,14 @@ function drawBody(ctx: CanvasRenderingContext2D, geo: Geometry, palette: Palette
     50 + plinthHalf, 80,
   );
   ctx.closePath();
-  ctx.fillStyle = palette.body;
+  ctx.fillStyle = cylinder(ctx, plinthHalf, palette);
   ctx.fill();
   ctx.stroke();
 
   // Kragen
   ctx.beginPath();
   ctx.ellipse(50, collarY, collarHalf, 4.5, 0, 0, Math.PI * 2);
-  ctx.fillStyle = palette.bodyShade;
+  ctx.fillStyle = cylinder(ctx, collarHalf, palette);
   ctx.fill();
   ctx.stroke();
 
@@ -211,6 +229,19 @@ function drawHead(
     ctx.fillRect(50 - headR, headY - headR, headR * 2, headR * 2);
     ctx.restore();
   }
+
+  // Der Kopf soll in der Figur sitzen und nicht darauf kleben: ein nach innen
+  // laufender Schatten setzt ihn in seine Fassung.
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(50, headY, headR, 0, Math.PI * 2);
+  ctx.clip();
+  const inset = ctx.createRadialGradient(50, headY, headR * 0.66, 50, headY, headR);
+  inset.addColorStop(0, 'rgba(0, 0, 0, 0)');
+  inset.addColorStop(1, 'rgba(0, 0, 0, 0.36)');
+  ctx.fillStyle = inset;
+  ctx.fillRect(50 - headR, headY - headR, headR * 2, headR * 2);
+  ctx.restore();
 
   ctx.lineWidth = 2.4;
   ctx.strokeStyle = palette.line;
@@ -289,7 +320,7 @@ function drawCrown(
   ctx.lineTo(68, bandBottom);
   ctx.lineTo(32, bandBottom);
   ctx.closePath();
-  ctx.fillStyle = palette.body;
+  ctx.fillStyle = cylinder(ctx, 20, palette);
   ctx.fill();
   ctx.stroke();
 
@@ -318,7 +349,7 @@ function drawMitre(ctx: CanvasRenderingContext2D, top: number, palette: Palette)
   ctx.bezierCurveTo(35, top - 5, 44, top - 12, 50, top - 17);
   ctx.bezierCurveTo(56, top - 12, 65, top - 5, 65, top + 6);
   ctx.closePath();
-  ctx.fillStyle = palette.body;
+  ctx.fillStyle = cylinder(ctx, 15, palette);
   ctx.fill();
   ctx.stroke();
 
@@ -358,7 +389,7 @@ function drawBattlements(ctx: CanvasRenderingContext2D, top: number, palette: Pa
   ctx.lineTo(68, crown);
   ctx.lineTo(68, bottom);
   ctx.closePath();
-  ctx.fillStyle = palette.body;
+  ctx.fillStyle = cylinder(ctx, 18, palette);
   ctx.fill();
   ctx.stroke();
 
@@ -369,7 +400,7 @@ function drawBattlements(ctx: CanvasRenderingContext2D, top: number, palette: Pa
   ctx.lineTo(68, bottom + 5);
   ctx.lineTo(32, bottom + 5);
   ctx.closePath();
-  ctx.fillStyle = palette.bodyShade;
+  ctx.fillStyle = cylinder(ctx, 20, palette);
   ctx.fill();
   ctx.stroke();
 }
@@ -397,7 +428,7 @@ function drawHelmet(ctx: CanvasRenderingContext2D, geo: Geometry, palette: Palet
   ctx.bezierCurveTo(50 - headR - 1, top - 8, 50 + headR + 1, top - 8, 50 + headR + 1, headY - 3);
   ctx.quadraticCurveTo(50, headY + 2, 50 - headR - 1, headY - 3);
   ctx.closePath();
-  ctx.fillStyle = palette.body;
+  ctx.fillStyle = cylinder(ctx, headR + 1, palette);
   ctx.fill();
   ctx.stroke();
 

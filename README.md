@@ -41,7 +41,12 @@ Neuladen. Sie verlassen das Gerät nicht — es gibt keinen Upload irgendwohin.
   Züge werden markiert.
 - Gegen den Computer (vier Stufen) oder zu zweit am selben Gerät.
 - Umwandlung mit Auswahl der Figur, Zurücknehmen, Brett drehen, Zugliste in
-  algebraischer Notation.
+  algebraischer Notation mit hervorgehobenem letzten Zug.
+- Tonrückmeldung für Zug, Schlag, Rochade, Schach und Partieende, abschaltbar
+  über das Notensymbol neben der Statuszeile. Die Klänge werden im Browser
+  erzeugt, es werden keine Audiodateien geladen.
+- Auf dem Handy nimmt das Brett die volle Breite ein, im Designer schrumpft
+  die Vorschau, damit der Hochladen-Knopf ohne Scrollen erreichbar bleibt.
 - Vollständige Regeln inklusive Rochade, en passant, Umwandlung, Matt, Patt,
   50-Züge-Regel, dreifacher Stellungswiederholung und Materialmangel.
 
