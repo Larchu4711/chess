@@ -18,6 +18,13 @@ nach `dist/`), `npm run preview` (den Build lokal ansehen).
 Das Ergebnis ist eine rein statische Seite — es gibt keinen Server und keine
 Konten. Alles läuft im Browser.
 
+## Veröffentlichung
+
+`.github/workflows/deploy.yml` baut und testet bei jedem Pull Request und
+veröffentlicht jeden Stand von `main` auf GitHub Pages. Der Workflow legt die
+Pages-Seite beim ersten Lauf selbst an. Weil Vite mit `base: './'` relative
+Pfade erzeugt, funktioniert der Build auch unter einem Unterverzeichnis.
+
 ## Figuren gestalten
 
 Über **Figuren gestalten** öffnet sich der Designer:
